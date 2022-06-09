@@ -1,20 +1,3 @@
-# nuxt-socket-io-demo
+# Motus Socket.IO
 
-## Build Setup
-
-```bash
-# install dependencies
-$ npm install
-
-# serve with hot reload at localhost:3000
-$ npm run devn
-
-# build for production and launch server
-$ npm run build
-$ npm run start
-
-# generate static project
-$ npm run generate
-```
-
-For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
+Kind of wordle base on a TV show "Motus" with the possibility to play with other player !
