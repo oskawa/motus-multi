@@ -1,5 +1,11 @@
 <template>
   <div class="container">
+    <div class="row">
+      <div class="col-12">
+      <h4>Joueur 1 : <span class="pointsPlayerOne">{{totalPointsPlayerOne}}</span></h4>
+      </div>
+    </div>
+    
     <div id="grille" class="grille">
       <table>
         <tr>
@@ -46,20 +52,50 @@
         </tr>
       </table>
     </div>
+
+    <div
+      v-if="endGame"
+      class="motus-modal fade"
+      id="exampleModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="exampleModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">
+              {{changeText}}
+            </h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Le mot a trouver était <strong>{{ wordToFindString }}</strong>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-primary"
+              v-on:click="winAndPlayAgain"
+            >
+              Recommencer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-var words = require('an-array-of-french-words')
-var test = words.filter((word)=>{
-  if(word.length === 5){
-    return word
-  }
-
-
-})
-console.log(test[10])
-
 class Grille {
   constructor(longueurMot, maxPropositions, indice) {
     this._grille = document.getElementById("grille");
@@ -78,29 +114,33 @@ export default {
     return {
       latestTickId: 0,
       Grille: null,
-      wordToFindString: "abric",
+      wordToFindString: "",
       nombreDessais: 1,
+      endGame: false,
+      totalPointsPlayerOne : 0,
+      changeText : "",
     };
   },
   mounted() {
     this.Grille = new Grille(5, 6, this.wordToFindString.charAt(0));
-    console.log(this.wordToFindString);
+
     const vm = this;
     // use "main" socket defined in nuxt.config.js
     vm.socket = this.$nuxtSocket({
-      name: "main", // select "main" socket from nuxt.config.js - we could also skip this because "main" is the default socket
+      name: "main" // select "main" socket from nuxt.config.js - we could also skip this because "main" is the default socket
     });
 
-    vm.socket.on("functionTest", function () {
+    vm.socket.on("functionTest", function() {
       console.log("un message est arrive ! ");
     });
 
-    vm.socket.on("tick", (tickId) => {
+    vm.socket.on("tick", tickId => {
       vm.latestTickId = tickId;
     });
 
-
-    document.addEventListener("keypress", (e) => {
+    this.getRandomWord();
+    document.addEventListener("keypress", e => {
+      console.log(e.key);
       if (String.fromCharCode(e.keyCode).match(/(\w|\s)/g)) {
         this.proposition(vm, this.nombreDessais, e.key);
       }
@@ -110,14 +150,57 @@ export default {
         }
       }
     });
+    document.addEventListener("keydown", e => {
+      if (e.key === "Backspace") {
+        this.removeLetter(this.nombreDessais);
+      }
+    });
   },
   methods: {
+    getRandomWord() {
+      this.Grille._indice = [];
+      var words = require("an-array-of-french-words");
+      var generateWord = words.filter(word => {
+        if (word.length === 5) {
+          return word;
+        }
+      })[this.getRandomInt(2000)];
+      generateWord = generateWord
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+      console.log(this.nombreDessais);
+      this.wordToFindString = generateWord;
+      console.log(generateWord);
+
+      this.Grille._indice[0] = Array.from(this.wordToFindString)[0];
+      document.querySelector(
+        "tr:nth-child(1) td:nth-child(1)"
+      ).innerHTML = this.Grille._indice[0];
+    },
+    getRandomInt(max) {
+      return Math.floor(Math.random() * max);
+    },
+    removeLetter(LineNumber) {
+      if (this.Grille._propositions.length > 0) {
+        var numberArrayWord = this.Grille._propositions.length;
+        var line = document.querySelector(
+          "tr:nth-child(" +
+            LineNumber +
+            ") td:nth-child(" +
+            numberArrayWord +
+            ")"
+        );
+
+        line.innerHTML = "";
+        this.Grille._propositions.pop();
+        console.log(this.Grille._propositions);
+      }
+    },
     proposition(vm, LineNumber, keyPressed) {
-     
       if (this.Grille._propositions.length < this.Grille._longueurMot) {
         this.Grille._propositions.push(keyPressed);
         var numberArrayWord = this.Grille._propositions.length;
-        
+
         var line = document.querySelector(
           "tr:nth-child(" +
             LineNumber +
@@ -140,69 +223,97 @@ export default {
     },
     compareWords() {
       var word = this.wordToFindArray(this.wordToFindString);
-
       for (let i = 0; i < this.Grille._propositions.length; i++) {
         var positionWord = i + 1;
         if (this.Grille._propositions[i] == word[i]) {
-          var line2 = document.querySelector(
+          var thToFill = document.querySelector(
             "tr:nth-child(" +
               this.nombreDessais +
               ") td:nth-child(" +
               positionWord +
               ")"
           );
-          line2.classList.add("existAndPlacement");
+          thToFill.classList.add("existAndPlacement");
           this.Grille._indice[i] = this.Grille._propositions[i];
         } else if (word.includes(this.Grille._propositions[i])) {
-          var line2 = document.querySelector(
+          var thToFill = document.querySelector(
             "tr:nth-child(" +
               this.nombreDessais +
               ") td:nth-child(" +
               positionWord +
               ")"
           );
-          line2.classList.add("exist");
+          thToFill.classList.add("exist");
+         
         } else {
-          var line2 = document.querySelector(
+          var thToFill = document.querySelector(
             "tr:nth-child(" +
               this.nombreDessais +
               ") td:nth-child(" +
               positionWord +
               ")"
           );
-          line2.classList.add("notExist");
+          thToFill.classList.add("notExist");
+        
         }
       }
-
-
 
       if (this.arraysEqual(this.Grille._propositions, word) == true) {
-        console.log("Bien joué !");
+        this.win()
       } else {
-      }
-      this.nombreDessais++;
-      console.log(this.Grille._indice)
-      if (this.Grille._indice){
-        for (let i = 0; i < this.Grille._indice.length; i++) {
-          if (this.Grille._indice[i] != null){
-            var positionIndice = i + 1;
-            document.querySelector("tr:nth-child(" +this.nombreDessais +  ") td:nth-child(" + positionIndice +")").innerHTML = this.Grille._indice[i]
-          
-          }          
+        this.nombreDessais++;
+         if(this.nombreDessais > this.Grille._maxPropositions){
+             this.loseAndRetry();
+          }else if (this.Grille._indice) {
+          for (let i = 0; i < this.Grille._indice.length; i++) {
+            if (this.Grille._indice[i] != null) {
+              var positionIndice = i + 1;
+              document.querySelector(
+                "tr:nth-child(" +
+                  this.nombreDessais +
+                  ") td:nth-child(" +
+                  positionIndice +
+                  ")"
+              ).innerHTML = this.Grille._indice[i];
+            }
+          }
         }
-
       }
-      const vm = this;
+
       this.Grille._propositions = [];
     },
+    win(){
+      this.endGame = true
+      this.changeText = "Bien joué ! Vous avez trouvé le mot !"
+      console.log(this.changeText)
+    },
+    loseAndRetry(){
+      
+      this.endGame = true;
+      this.changeText = "Vous avez perdu ! Réessayez."
+    },
+    winAndPlayAgain() {
+      this.totalPointsPlayerOne = this.totalPointsPlayerOne + 50
+      this.endGame = false;
+      this.Grille._propositions = [];
+      this.nombreDessais = 1;
+      console.log(this.nombreDessais);
+      var tdDiv = document.querySelectorAll("td");
+      for (let i = 0; i < tdDiv.length; ++i) {
+        tdDiv[i].removeAttribute("class");
+        tdDiv[i].innerHTML = "";
+      }
+      this.getRandomWord();
+    },
+
     wordToFindArray(wordToFind) {
       const usingSplit = wordToFind.split("");
       const usingSpread = [...wordToFind];
       const usingArrayFrom = Array.from(wordToFind);
       const usingObjectAssign = Object.assign([], wordToFind);
       return usingObjectAssign;
-    },
-  },
+    }
+  }
 };
 </script>
 
@@ -264,25 +375,36 @@ body {
 .existAndPlacement:after {
   background: #e7002a;
   width: 49px;
-height: 49px;
-position: absolute;
-top: 0;
-left: 0;
-z-index: -1;
-content: " ";
+  height: 49px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  content: " ";
 }
 .exist {
   background: #ffbd00;
   border-radius: 50%;
   width: 49px;
-height: 49px;
-position: absolute;
-top: 0;
-left: 0;
-z-index: -1;
-content: " ";
+  height: 49px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  content: " ";
 }
 .notExist {
-  
+}
+.motus-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1050;
+
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  outline: 0;
+  opacity: 1 !important;
 }
 </style>
