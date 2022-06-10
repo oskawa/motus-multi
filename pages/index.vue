@@ -50,6 +50,16 @@
 </template>
 
 <script>
+var words = require('an-array-of-french-words')
+var test = words.filter((word)=>{
+  if(word.length === 5){
+    return word
+  }
+
+
+})
+console.log(test[10])
+
 class Grille {
   constructor(longueurMot, maxPropositions, indice) {
     this._grille = document.getElementById("grille");
