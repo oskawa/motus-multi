@@ -17,11 +17,13 @@
     "bootstrap-vue": "^2.21.2",
     "core-js": "^3.9.1",
     "nuxt": "^2.15.3",
-    "nuxt-socket-io": "^1.1.14"
+    "nuxt-socket-io": "^1.1.14",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@nuxtjs/eslint-config": "^6.0.0",
     "@nuxtjs/eslint-module": "^3.0.2",
+    "@nuxtjs/google-fonts": "^2.0.0",
     "babel-eslint": "^10.1.0",
     "eslint": "^7.22.0",
     "eslint-plugin-nuxt": "^2.0.0",
