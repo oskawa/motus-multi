@@ -36,6 +36,10 @@ io.on('connection', (socket) => {
     socket.to(room).emit('newRound', wordToFindString)
   })
 
+  socket.on('looseOpponentToPlay', function(room, wordToFindString){
+    socket.to(room).emit('opponentLooseTurnToPlay')
+  })
+
 
 })
 

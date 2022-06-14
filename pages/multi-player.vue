@@ -274,6 +274,17 @@ export default {
       this.placeIndice()
     })
 
+    vm.socket.on('opponentLooseTurnToPlay', ()=>{
+      this.turnToPlay = true
+        var tdDiv = document.querySelectorAll("td");
+      for (let i = 20; i < tdDiv.length; ++i) {
+        tdDiv[i].removeAttribute("class");
+        tdDiv[i].innerHTML = "";
+      }
+
+
+    })
+
     document.addEventListener("keypress", (e) => {
       if (this.turnToPlay) {
         if (
@@ -529,7 +540,10 @@ export default {
       this.changeText = "Bien joué ! Vous avez trouvé le mot !";
     },
     loseAndRetry() {
-      this.endGame = true;
+      this.turnToPlay = false
+        const vm = this;
+        vm.socket.emit('looseOpponentToPlay', this.uuid, this.wordToFindString)
+
       this.changeText = "Vous avez perdu ! Réessayez.";
       
     },
