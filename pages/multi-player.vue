@@ -195,10 +195,11 @@ export default {
       chooseSettings: true,
       userNumber: 0,
       turnToPlay: false,
+      opponentAlreadyLoose: false,
+      looseRound: false,
     };
   },
   created() {
-    
     this.uuidd = this.$nuxt._route.query.multiID;
   },
   mounted() {
@@ -209,34 +210,28 @@ export default {
     });
     vm.socket.emit("join", this.uuid);
 
-    vm.socket.on("functionTest", function () {
-   
-    });
+    vm.socket.on("functionTest", function () {});
 
-    vm.socket.on("playerConnected", function () {
-      
-    });
+    vm.socket.on("playerConnected", function () {});
 
     vm.socket.on("waitingPlayer", (numberOfUser) => {
-   
       if (numberOfUser == 1) {
         this.userNumber = 1;
         this.chooseSettings = true;
         this.turnToPlay = true;
       } else if (numberOfUser == 2) {
-     
         this.chooseSettings = false;
         this.userNumber = 2;
         this.turnToPlay = false;
       } else {
-        
+        this.userNumber = 3;
       }
+      console.log(this.userNumber)
     });
 
     vm.socket.on("createTable", (table, wordToFindString) => {
-     
       this.wordToFindString = wordToFindString;
-  
+
       this.Grille = new Grille(
         this.lettersNumber,
         6,
@@ -246,18 +241,20 @@ export default {
       this.placeIndice();
     });
 
-    vm.socket.on('propOpponent', (propOpponent, tryNumber)=>{
-    
-      this.fillOpponent(propOpponent, tryNumber)
-      this.Grille._propositions = propOpponent
-      this.compareWords()
-    })
+    vm.socket.on("propOpponent", (propOpponent, tryNumber) => {
+      this.fillOpponent(propOpponent, tryNumber);
+      this.Grille._propositions = propOpponent;
+      this.compareWords();
+    });
 
-    vm.socket.on('newRound', (wordToFind)=>{
-       this.endGame = false;
-
+    vm.socket.on("newRound", (wordToFind) => {
+      console.log(this.userNumber)
+      console.log('on commence un nouveau round')
+      this.endGame = false;
       this.Grille._propositions = [];
       this.nombreDessais = 1;
+      this.Grille._indice = []
+     
 
       var tdDiv = document.querySelectorAll("td");
       for (let i = 0; i < tdDiv.length; ++i) {
@@ -265,25 +262,53 @@ export default {
         tdDiv[i].innerHTML = "";
       }
 
-      this.wordToFindString = wordToFind
+      this.wordToFindString = wordToFind;
 
-      if((this.userNumber = 1) || (this.userNumber = 2) ){
-        this.turnToPlay = true
-       
+      if ((this.userNumber == 1) || (this.userNumber == 2)) {
+        if (this.opponentAlreadyLoose) {
+          this.turnToPlay = true;
+          this.opponentAlreadyLoose = false;
+        }
+        if (this.looseRound) {
+          this.turnToPlay = false;
+          this.looseRound = false;
+        }
       }
-      this.placeIndice()
-    })
+      this.placeIndice();
+    });
 
-    vm.socket.on('opponentLooseTurnToPlay', ()=>{
-      this.turnToPlay = true
-        var tdDiv = document.querySelectorAll("td");
+    vm.socket.on("opponentLooseTurnToPlay", (userId) => {
+      console.log('Envoyé à tous !')
+      console.log(this.userNumber)
+      console.log(userId)
+      if (this.userNumber == userId) {
+        this.turnToPlay = false
+      }else{
+        console.log(this.userNumber)
+        console.log('wtf')
+        this.opponentAlreadyLoose = true;
+        this.turnToPlay = true;
+      }
+
+      var tdDiv = document.querySelectorAll("td");
       for (let i = 20; i < tdDiv.length; ++i) {
         tdDiv[i].removeAttribute("class");
         tdDiv[i].innerHTML = "";
       }
-
-
-    })
+      this.nombreDessais = 5;
+      for (let i = 0; i < this.Grille._indice.length; i++) {
+        if (this.Grille._indice[i] != null) {
+          var positionIndice = i + 1;
+          document.querySelector(
+            "tr:nth-child(" +
+              this.nombreDessais +
+              ") td:nth-child(" +
+              positionIndice +
+              ")"
+          ).innerHTML = this.Grille._indice[i];
+        }
+      }
+    });
 
     document.addEventListener("keypress", (e) => {
       if (this.turnToPlay) {
@@ -295,11 +320,13 @@ export default {
         }
         if (e.key === "Enter") {
           if (this.Grille._propositions.length == this.Grille._longueurMot) {
-         
-             vm.socket.emit('wordProposition', this.uuid, this.Grille._propositions, this.nombreDessais)
+            vm.socket.emit(
+              "wordProposition",
+              this.uuid,
+              this.Grille._propositions,
+              this.nombreDessais
+            );
             this.compareWords();
-           
-
           }
         }
       }
@@ -313,22 +340,16 @@ export default {
     });
   },
   methods: {
-    fillOpponent(prop, tryNumber){
-     
-     for (let index = 0; index < prop.length; index++) {
-      const element = prop[index];
-      let nthChild = index + 1 
+    fillOpponent(prop, tryNumber) {
+      for (let index = 0; index < prop.length; index++) {
+        const element = prop[index];
+        let nthChild = index + 1;
         var line = document.querySelector(
-          "tr:nth-child(" +
-            tryNumber +
-            ") td:nth-child(" +
-            nthChild +
-            ")"
+          "tr:nth-child(" + tryNumber + ") td:nth-child(" + nthChild + ")"
         );
 
-        line.innerHTML = element; 
-     }
-                 
+        line.innerHTML = element;
+      }
     },
     tableCreate(tdNumber, trNumber) {
       const body = document.body,
@@ -375,7 +396,6 @@ export default {
         this.timer = this.timer + 1;
 
         if (this.timer > this.timerDuration) {
-         
           clearInterval(this.time);
           this.compareWords();
         }
@@ -386,7 +406,6 @@ export default {
       let letter = this.lettersNumber;
 
       var generateWord = words.filter((word) => word.length == letter);
-     
 
       generateWord = generateWord[this.getRandomInt(generateWord.length - 1)];
 
@@ -395,9 +414,11 @@ export default {
         .replace(/[\u0300-\u036f]/g, "");
 
       this.wordToFindString = generateWord;
-      
+      console.log(this.wordToFindString)
     },
     placeIndice() {
+      console.log(this.userNumber)
+      console.log(this.wordToFindString)
       this.Grille._indice = [];
       this.Grille._indice[0] = Array.from(this.wordToFindString)[0];
       document.querySelector("tr:nth-child(1) td:nth-child(1)").innerHTML =
@@ -448,6 +469,7 @@ export default {
       return true;
     },
     compareWords() {
+      console.log('compare word id user : '+this.userNumber)
       var word = this.wordToFindArray(this.wordToFindString.toUpperCase());
       for (let i = 0; i < this.Grille._propositions.length; i++) {
         var positionWord = i + 1;
@@ -463,7 +485,6 @@ export default {
               ")"
           );
 
-        
           thToFill.classList.add("existAndPlacement");
 
           animationSecond = animationSecond + 2;
@@ -496,17 +517,28 @@ export default {
       }
 
       if (this.arraysEqual(this.Grille._propositions, word) == true) {
-        if (this.turnToPlay = true){
-        this.win();
-        }else{
-          this.opponentWinRound()
+        if ((this.turnToPlay = true)) {
+          this.win();
+        } else {
+          this.opponentWinRound();
         }
-
       } else {
         this.nombreDessais++;
         if (this.nombreDessais > this.Grille._maxPropositions) {
-          this.loseAndRetry();
-          this.loosePoint = true;
+          if (!this.opponentAlreadyLoose) {
+            if (this.turnToPlay) {
+              console.log('cest perdu :'+this.userNumber)
+              this.loseAndRetry();
+            }
+          } else {
+            this.endGame = true;
+this.loosePoint = true;
+            setTimeout(() => {
+              this.changeWord();
+            }, 5000);
+          }
+
+          
         } else if (this.Grille._indice) {
           if (this.timerActivation) {
             this.timer = 0;
@@ -531,8 +563,24 @@ export default {
 
       this.Grille._propositions = [];
     },
-    opponentWinRound(){
- this.endGame = true;
+    changeWord() {
+      const vm = this;
+      this.endGame = false;
+this.loosePoint = false;
+      this.Grille._propositions = [];
+      this.nombreDessais = 1;
+
+      var tdDiv = document.querySelectorAll("td");
+      for (let i = 0; i < tdDiv.length; ++i) {
+        tdDiv[i].removeAttribute("class");
+        tdDiv[i].innerHTML = "";
+      }
+      this.getRandomWord();
+      vm.socket.emit("newWord", this.uuid, this.wordToFindString);
+    },
+
+    opponentWinRound() {
+      this.endGame = true;
       this.changeText = "Votre adversaire a trouvé le mot";
     },
     win() {
@@ -540,16 +588,41 @@ export default {
       this.changeText = "Bien joué ! Vous avez trouvé le mot !";
     },
     loseAndRetry() {
-      this.turnToPlay = false
-        const vm = this;
-        vm.socket.emit('looseOpponentToPlay', this.uuid, this.wordToFindString)
+       console.log('Mon ID : '+this.userNumber)
+      this.looseRound = true;
+      this.turnToPlay = false;
+        var tdDiv = document.querySelectorAll("td");
+      for (let i = 20; i < tdDiv.length; ++i) {
+        tdDiv[i].removeAttribute("class");
+        tdDiv[i].innerHTML = "";
+      }
+      this.nombreDessais = 5;
+      for (let i = 0; i < this.Grille._indice.length; i++) {
+        if (this.Grille._indice[i] != null) {
+          var positionIndice = i + 1;
+          document.querySelector(
+            "tr:nth-child(" +
+              this.nombreDessais +
+              ") td:nth-child(" +
+              positionIndice +
+              ")"
+          ).innerHTML = this.Grille._indice[i];
+        }
+      }
+      const vm = this;
+     console.log('Mon ID : '+this.userNumber)
+      vm.socket.emit(
+        "looseOpponentToPlay",
+        this.uuid,
+        this.userNumber,
+        this.wordToFindString
+      );
 
       this.changeText = "Vous avez perdu ! Réessayez.";
-      
     },
-    
+
     gameContinue() {
-         const vm = this;
+      const vm = this;
       if (!this.loosePoint) {
         this.totalPointsPlayerOne = this.totalPointsPlayerOne + 50;
       }
@@ -564,11 +637,9 @@ export default {
         tdDiv[i].innerHTML = "";
       }
       this.getRandomWord();
-      this.turnToPlay = false
-      
-      vm.socket.emit('newWord', this.uuid, this.wordToFindString)
+      this.turnToPlay = false;
 
-      
+      vm.socket.emit("newWord", this.uuid, this.wordToFindString);
     },
 
     wordToFindArray(wordToFind) {
