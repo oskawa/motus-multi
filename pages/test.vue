@@ -1,159 +1,122 @@
 <template>
-  <div class="container">
-    <div class="row">
-      <div class="col-12">
-        <div class="player-score">
-          <h4>
-            Joueur 1 :
-            <span class="pointsPlayerOne">{{ totalPointsPlayerOne }}</span>
-          </h4>
-        </div>
-        <div class="time-remain">
-          <h1>{{ timer }}</h1>
-        </div>
-      </div>
-    </div>
-
-    <div id="grille" class="grille">
-      <!-- <table>
-        <tr>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>
-        <tr>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>
-        <tr>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>
-        <tr>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>
-        <tr>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>
-        <tr>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>
-      </table> -->
-    </div>
-
-    <div
-      v-if="endGame"
-      class="motus-modal fade"
-      id="exampleModal"
-      tabindex="-1"
-      role="dialog"
-      aria-labelledby="exampleModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">
-              {{ changeText }}
-            </h5>
-            <button
-              type="button"
-              class="close"
-              data-dismiss="modal"
-              aria-label="Close"
-            >
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            Le mot a trouver était <strong>{{ wordToFindString }}</strong>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-primary"
-              v-on:click="gameContinue"
-            >
-              Recommencer
-            </button>
+  <div class="container section-app">
+    <div class="row row-timer">
+      <div class="col-2">
+        <div class="timer-container">
+          <div class="timer-content">
+            <span class="timer-modif">30</span>
           </div>
         </div>
       </div>
     </div>
+    <div class="row row-app">
+      <div class="col-2">
+        <div class="name-player  name-player-one"><h3>Player 1</h3></div>
+        <div class="individual-score player-one"><span>000</span></div>
+      </div>
 
-    <div
-      v-if="chooseSettings"
-      class="motus-modal fade"
-      id="exampleModal"
-      tabindex="-1"
-      role="dialog"
-      aria-labelledby="exampleModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Choix des règles</h5>
-          </div>
-          <div class="modal-body">
-            Veuillez choisir les règles s'il vous plait :
-            <div class="input-div">
-              <h5>Nombre de lettres :</h5>
-              <input
-                type="number"
-                name="lettersNumber"
-                v-model="lettersNumber"
-                id=""
-                value="5"
-                placeholder="Nombre de lettres"
-              />
+      <div class="col-6">
+        <div class="grid-container">
+          <div id="grille" class="grille">
+            <div
+              v-if="endGame"
+              class="motus-pop"
+              id="exampleModal"
+             
+            >
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">
+                      {{ changeText }}
+                    </h5>
+                    <button
+                      type="button"
+                      class="close"
+                      data-dismiss="modal"
+                      aria-label="Close"
+                    >
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    Le mot a trouver était
+                    <strong>{{ wordToFindString }}</strong>
+                  </div>
+                  <div class="modal-footer">
+                    <button
+                      type="button"
+                      class="btn btn-primary"
+                      v-on:click="gameContinue"
+                    >
+                      Recommencer
+                    </button>
+                  </div>
+                </div>
+              </div>
+           
+
+            <div
+              v-if="chooseSettings"
+              class="motus-rules fade"
+              id="exampleModal"
+            >
+              <div class="">
+                <h5 class="modal-title" id="exampleModalLabel">
+                  Règlages du jeu : 
+                </h5>
+              
+                <p>Afin de personnaliser au mieux votre expérience de jeu multi-joueur, vous pouvez modifier quelques paramètres.</p>
+                <div class="input-div">
+                  <h6>Nombre de lettres :</h6>
+                
+                  <input
+                    type="number"
+                    name="lettersNumber"
+                    v-model="lettersNumber"
+                    class="input-number__custom"
+                    id=""
+                    value="6"
+                    min="6"
+                    max="10"
+                    placeholder="Nombre de lettres"
+                  />
+                </div>
+
+                <div class="input-div">
+                  <h6>Activation du chronomètre ?</h6>
+                  <input
+                    type="checkbox"
+                    name="timerActivation"
+                    id=""
+                    v-on:change="toggleTimer"
+                  />
+                </div>
+                <div class="input-div" v-if="timerActivation">
+                  <h6>Temps du chronomètre</h6>
+                  <input
+                    type="number"
+                    name=""
+                    id=""
+                    value="10"
+                    v-model="timerDuration"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  class="btn-fill"
+                  v-on:click="playInit"
+                >
+                  Commencer !
+                </button>
+              </div>
             </div>
-            <div class="input-div">
-              <h5>Activation du chronomètre ?</h5>
-              <input
-                type="checkbox"
-                name="timerActivation"
-                id=""
-                v-on:change="toggleTimer"
-              />
-            </div>
-            <div class="input-div" v-if="timerActivation">
-              <h5>Intervalle de temps</h5>
-              <input
-                type="number"
-                name=""
-                id=""
-                value="10"
-                v-model="timerDuration"
-              />
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" v-on:click="playInit">
-              Commencer !
-            </button>
           </div>
         </div>
+      </div>
+      <div class="col-2">
+        <div class="name-player name-player-two"><h3>Player 2</h3></div>
+        <div class="individual-score player-two"><span>000</span></div>
       </div>
     </div>
   </div>
@@ -652,52 +615,73 @@ export default {
 </script>
 
 <style>
+:root {
+  --cellsNumber: 6;
+}
 body {
-  background-color: rgb(43, 43, 43);
+  height: 100vh;
+  background: linear-gradient(180deg, #3cb396 0%, #000c78 100%);
 }
-.container {
-  margin: 0 auto;
-  min-height: 100vh;
-  display: flex;
+.section-app {
+  height: 100vh;
+  padding-top: 8rem;
+}
+.section-app .row-app {
+  height: auto;
   justify-content: center;
+  align-items: end;
+}
+.row-timer {
+  justify-content: center;
+}
+.individual-score {
+  width: 100%;
+  height: 76px;
+
+  box-shadow: 0px 0px 6px 2px rgba(251, 251, 251, 0.25);
+  display: flex;
   align-items: center;
-  text-align: center;
+  justify-content: center;
 }
+.individual-score span {
+  font-family: "Raleway";
+  font-style: normal;
+  font-weight: 800;
+  font-size: 50px;
+  line-height: 59px;
+  /* identical to box height */
 
-.title {
-  font-family: "Quicksand", "Source Sans Pro", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  display: block;
-  font-weight: 300;
-  font-size: 100px;
-  color: #35495e;
-  letter-spacing: 1px;
+  color: #ffffff;
 }
-
-.subtitle {
-  font-weight: 300;
-  font-size: 42px;
-  color: #526488;
-  word-spacing: 5px;
-  padding-bottom: 15px;
+.player-one {
+  background: #c6c94f;
 }
-
-.links {
-  padding-top: 15px;
+.player-two {
+  background: #d14c4c;
 }
 #grille {
   margin-left: auto;
   margin-right: auto;
   background-color: #0077c7;
   min-height: 300;
+  height: 540px;
+  position: relative;
 }
 #grille table {
   border-spacing: 0;
+  width: 100%;
   background: #0077c7;
+  height: 100%;
+  box-shadow: inset 0px 10px 11px 1px rgba(0, 0, 0, 0.25);
 }
 #grille td {
+  --var: calc(100% - var(--cellsNumber));
+  min-width: var(--var);
+  max-width: var(--var);
+
   width: 50px;
-  height: 50px;
+  height: var(--var);
+
   text-align: center;
   position: relative;
   padding: 2px;
@@ -705,23 +689,59 @@ body {
   border: 1px solid white;
   z-index: 0;
   text-transform: uppercase;
-  font-family: "Darker Grotesque";
-  font-weight: 600;
-  font-size: 20px;
+
+  line-height: 0;
+
+  font-family: "Raleway";
+  font-style: normal;
+  font-weight: 800;
+  font-size: 50px;
+  color: #ffffff;
+}
+
+.name-player {
+  font-family: "Raleway";
+  font-style: normal;
+  font-weight: 800;
+  font-size: 25px;
+  line-height: 29px;
+  color: #ffffff;
+  text-align: center;
+}
+.timer-content {
+  background: #2f2834;
+  box-shadow: 0px 0px 6px 2px rgba(251, 251, 251, 0.25);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.timer-container {
+  margin-bottom: 1rem;
+}
+.timer-content span {
+  font-family: "Raleway";
+  font-style: normal;
+  font-weight: 800;
+  font-size: 40px;
+
+  color: #ffffff;
 }
 .existAndPlacement {
   transition: all 200ms;
 }
 .existAndPlacement:after {
   background: #e7002a;
-  width: 49px;
-  height: 49px;
+  width: 100%;
+  height: 100%;
   position: absolute;
   top: 0;
   left: 0;
   z-index: -1;
   content: " ";
   transition: all 200ms;
+  /* Rectangle 12 */
+
+  box-shadow: inset 0px 4px 4px rgba(0, 0, 0, 0.25);
 }
 .exist {
   background: #ffbd00;
@@ -734,22 +754,89 @@ body {
   z-index: -1;
   content: " ";
   transition: all 200ms;
+
+  box-shadow: inset 0px 4px 4px rgba(0, 0, 0, 0.25);
 }
 .notExist {
 }
-.motus-modal {
-  position: fixed;
-  top: 0;
+.motus-rules {
+  position: absolute;
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.5);
+  right: 0;
+  bottom: 0;
   left: 0;
-  z-index: 1050;
-
-  width: 100%;
-  height: 100%;
+  top: 0;
   overflow: hidden;
   outline: 0;
   opacity: 1 !important;
+  padding: 5rem;
 }
-.player-score {
+.motus-rules h5 {
   color: white;
+  font-family: "Raleway";
+  font-style: normal;
+  font-weight: 800;
+  font-size: 30px;
+}
+.motus-rules p{
+
+font-family: 'Raleway';
+font-style: normal;
+font-weight: 400;
+font-size: 16px;
+line-height: 19px;
+
+color: #FFFFFF;
+margin:1rem 0;
+
+
+}
+.motus-rules h6{
+
+font-family: 'Raleway';
+font-style: normal;
+font-weight: 700;
+font-size: 16px;
+line-height: 19px;
+color: #FFFFFF;
+
+
+}
+.motus-rules .input-div{
+  display:flex;
+  align-items:center;
+  margin-bottom:1rem;
+}
+.motus-pop{
+    position:absolute;
+    background-color: rgba(0, 0, 0, 0.5);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  top: 0;
+  overflow: hidden;
+  outline: 0;
+  z-index:1;
+
+}
+.input-number__custom{
+
+}
+.btn-fill{
+background: #3CB396;
+border-radius: 38px;
+width:100%;
+font-family: 'Raleway';
+font-style: normal;
+font-weight: 400;
+font-size: 20px;
+line-height: 23px;
+text-align: center;
+padding:0.5rem;
+color: #FFFFFF;
+border:none;
+
+
 }
 </style>
