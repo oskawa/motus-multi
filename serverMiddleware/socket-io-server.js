@@ -32,8 +32,8 @@ io.on('connection', (socket) => {
     socket.to(room).emit('propOpponent', propositionOpponent, tryNumber)
   })
 
-  socket.on('newWord', function(room, wordToFindString){
-    io.to(room).emit('newRound', wordToFindString)
+  socket.on('newWord', function(room, wordToFindString, userNumber){
+    io.to(room).emit('newRound', wordToFindString, userNumber)
   })
 
   socket.on('looseOpponentToPlay', function(room, userNumber, wordToFindString){

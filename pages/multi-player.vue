@@ -247,7 +247,7 @@ export default {
       this.compareWords();
     });
 
-    vm.socket.on("newRound", (wordToFind) => {
+    vm.socket.on("newRound", (wordToFind, userNumber) => {
       console.log(this.userNumber)
       console.log('on commence un nouveau round')
       this.endGame = false;
@@ -268,11 +268,14 @@ export default {
         if (this.opponentAlreadyLoose) {
           this.turnToPlay = true;
           this.opponentAlreadyLoose = false;
+          
         }
         if (this.looseRound) {
           this.turnToPlay = false;
           this.looseRound = false;
-        }
+        
+
+
       }
       this.placeIndice();
     });
@@ -285,7 +288,7 @@ export default {
         this.turnToPlay = false
       }else{
         console.log(this.userNumber)
-        console.log('wtf')
+        
         this.opponentAlreadyLoose = true;
         this.turnToPlay = true;
       }
@@ -295,6 +298,8 @@ export default {
         tdDiv[i].removeAttribute("class");
         tdDiv[i].innerHTML = "";
       }
+
+            
       this.nombreDessais = 5;
       for (let i = 0; i < this.Grille._indice.length; i++) {
         if (this.Grille._indice[i] != null) {
@@ -581,7 +586,7 @@ this.loosePoint = false;
 
     opponentWinRound() {
       this.endGame = true;
-      this.changeText = "Votre adversaire a trouvé le mot";
+     
     },
     win() {
       this.endGame = true;
@@ -637,9 +642,13 @@ this.loosePoint = false;
         tdDiv[i].innerHTML = "";
       }
       this.getRandomWord();
-      this.turnToPlay = false;
+      if(this.loosePoint){
 
-      vm.socket.emit("newWord", this.uuid, this.wordToFindString);
+      
+      this.turnToPlay = false;
+      }
+
+      vm.socket.emit("newWord", this.uuid, this.wordToFindString, this.userNumber);
     },
 
     wordToFindArray(wordToFind) {
