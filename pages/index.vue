@@ -8,7 +8,7 @@
           <NuxtLink class="link-btn" to="/solo">Mode solo</NuxtLink>
           <NuxtLink
             class="link-btn"
-            :to="{ path: 'multi-player', query: { multiID } }"
+            :to="{ path: 'test', query: { multiID } }"
             >Mode Multi-joueur</NuxtLink
           >
         </div>

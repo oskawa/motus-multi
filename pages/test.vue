@@ -11,49 +11,47 @@
     </div>
     <div class="row row-app">
       <div class="col-2">
-        <div class="name-player  name-player-one"><h3>Player 1</h3></div>
-        <div class="individual-score player-one"><span>000</span></div>
+        <div class="name-player name-player-one"><h3>Player 1</h3></div>
+        <div class="individual-score player-one">
+          <span>{{ totalPointsPlayerOne }}</span>
+        </div>
       </div>
 
       <div class="col-6">
         <div class="grid-container">
           <div id="grille" class="grille">
-            <div
-              v-if="endGame"
-              class="motus-pop"
-              id="exampleModal"
-             
-            >
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">
-                      {{ changeText }}
-                    </h5>
-                    <button
-                      type="button"
-                      class="close"
-                      data-dismiss="modal"
-                      aria-label="Close"
-                    >
-                      <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>
-                  <div class="modal-body">
-                    Le mot a trouver était
-                    <strong>{{ wordToFindString }}</strong>
-                  </div>
-                  <div class="modal-footer">
-                    <button
-                      type="button"
-                      class="btn btn-primary"
-                      v-on:click="gameContinue"
-                    >
-                      Recommencer
-                    </button>
-                  </div>
+            <div v-if="endGame" class="motus-pop" id="exampleModal">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLabel">
+                    {{ changeText }}
+                  </h5>
+                  <button
+                    type="button"
+                    class="close"
+                    data-dismiss="modal"
+                    aria-label="Close"
+                  >
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  Le mot a trouver était
+                  <strong>{{ wordToFindString }}</strong>
+                </div>
+                <div class="modal-footer">
+                  <button
+                  v-if="winRound"
+                  
+                    type="button"
+                    class="btn btn-primary"
+                    v-on:click="gameContinue"
+                  >
+                    Recommencer
+                  </button>
                 </div>
               </div>
-           
+            </div>
 
             <div
               v-if="chooseSettings"
@@ -62,13 +60,16 @@
             >
               <div class="">
                 <h5 class="modal-title" id="exampleModalLabel">
-                  Règlages du jeu : 
+                  Règlages du jeu :
                 </h5>
-              
-                <p>Afin de personnaliser au mieux votre expérience de jeu multi-joueur, vous pouvez modifier quelques paramètres.</p>
+
+                <p>
+                  Afin de personnaliser au mieux votre expérience de jeu
+                  multi-joueur, vous pouvez modifier quelques paramètres.
+                </p>
                 <div class="input-div">
                   <h6>Nombre de lettres :</h6>
-                
+
                   <input
                     type="number"
                     name="lettersNumber"
@@ -102,11 +103,7 @@
                   />
                 </div>
 
-                <button
-                  type="button"
-                  class="btn-fill"
-                  v-on:click="playInit"
-                >
+                <button type="button" class="btn-fill" v-on:click="playInit">
                   Commencer !
                 </button>
               </div>
@@ -116,7 +113,9 @@
       </div>
       <div class="col-2">
         <div class="name-player name-player-two"><h3>Player 2</h3></div>
-        <div class="individual-score player-two"><span>000</span></div>
+        <div class="individual-score player-two">
+          <span>{{ totalPointsPlayerTwo }}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -146,6 +145,8 @@ export default {
       nombreDessais: 1,
       endGame: false,
       totalPointsPlayerOne: 0,
+      totalPointsPlayerTwo: 0,
+      winRound : false,
       changeText: "",
       timer: 0,
       time: null,
@@ -159,7 +160,7 @@ export default {
       userNumber: 0,
       turnToPlay: false,
       opponentAlreadyLoose: false,
-      looseRound: false
+      looseRound: false,
     };
   },
   created() {
@@ -169,15 +170,15 @@ export default {
     const vm = this;
     // use "main" socket defined in nuxt.config.js
     vm.socket = this.$nuxtSocket({
-      name: "main" // select "main" socket from nuxt.config.js - we could also skip this because "main" is the default socket
+      name: "main", // select "main" socket from nuxt.config.js - we could also skip this because "main" is the default socket
     });
     vm.socket.emit("join", this.uuid);
 
-    vm.socket.on("functionTest", function() {});
+    vm.socket.on("functionTest", function () {});
 
-    vm.socket.on("playerConnected", function() {});
+    vm.socket.on("playerConnected", function () {});
 
-    vm.socket.on("waitingPlayer", numberOfUser => {
+    vm.socket.on("waitingPlayer", (numberOfUser) => {
       if (numberOfUser == 1) {
         this.userNumber = 1;
         this.chooseSettings = true;
@@ -194,9 +195,10 @@ export default {
 
     vm.socket.on("createTable", (table, wordToFindString) => {
       this.wordToFindString = wordToFindString;
+      console.log(table._longueurMot);
 
       this.Grille = new Grille(
-        this.lettersNumber,
+        table._longueurMot,
         6,
         this.wordToFindString.charAt(0)
       );
@@ -210,8 +212,7 @@ export default {
       this.compareWords();
     });
 
-    vm.socket.on("newRound", wordToFind => {
-      console.log(this.userNumber);
+    vm.socket.on("newRound", (wordToFind, lastWinner) => {
       console.log("on commence un nouveau round");
       this.endGame = false;
       this.Grille._propositions = [];
@@ -227,20 +228,23 @@ export default {
       this.wordToFindString = wordToFind;
 
       if (this.userNumber == 1 || this.userNumber == 2) {
-        if (this.opponentAlreadyLoose) {
-          this.turnToPlay = true;
-          this.opponentAlreadyLoose = false;
-        }
-        if (this.looseRound) {
-          this.turnToPlay = false;
-          this.looseRound = false;
+       
+        if(lastWinner == this.winRound){
+            this.turnToPlay = true;
+            this.opponentAlreadyLoose = false;
+             this.looseRound = false;
+        }else{
+          console.log('on ne joue pas')
+           this.turnToPlay = false;
+            this.opponentAlreadyLoose = false;
+             this.looseRound = false;
         }
       }
       this.placeIndice();
     });
 
-    vm.socket.on("opponentLooseTurnToPlay", userId => {
-      console.log("Envoyé à tous !");
+    vm.socket.on("opponentLooseTurnToPlay", (userId) => {
+     
       console.log(this.userNumber);
       console.log(userId);
       if (this.userNumber == userId) {
@@ -272,7 +276,13 @@ export default {
       }
     });
 
-    document.addEventListener("keypress", e => {
+vm.socket.on('addPointToPlayer', (userId) =>{
+
+  this.addPointToPlayer(userId)
+})
+
+
+    document.addEventListener("keypress", (e) => {
       if (this.turnToPlay) {
         if (
           String.fromCharCode(e.keyCode).match(/(\w|\s)/g) &&
@@ -293,7 +303,7 @@ export default {
         }
       }
     });
-    document.addEventListener("keydown", e => {
+    document.addEventListener("keydown", (e) => {
       if (this.turnToPlay) {
         if (e.key === "Backspace") {
           this.removeLetter(this.nombreDessais);
@@ -367,7 +377,7 @@ export default {
     getRandomWord() {
       let letter = this.lettersNumber;
 
-      var generateWord = words.filter(word => word.length == letter);
+      var generateWord = words.filter((word) => word.length == letter);
 
       generateWord = generateWord[this.getRandomInt(generateWord.length - 1)];
 
@@ -383,9 +393,8 @@ export default {
       console.log(this.wordToFindString);
       this.Grille._indice = [];
       this.Grille._indice[0] = Array.from(this.wordToFindString)[0];
-      document.querySelector(
-        "tr:nth-child(1) td:nth-child(1)"
-      ).innerHTML = this.Grille._indice[0];
+      document.querySelector("tr:nth-child(1) td:nth-child(1)").innerHTML =
+        this.Grille._indice[0];
     },
     getRandomInt(max) {
       return Math.floor(Math.random() * max);
@@ -406,6 +415,8 @@ export default {
       }
     },
     proposition(vm, LineNumber, keyPressed) {
+      console.log(this.Grille._propositions.length);
+      console.log(this.Grille._longueurMot);
       if (this.Grille._propositions.length < this.Grille._longueurMot) {
         this.Grille._propositions.push(keyPressed.toUpperCase());
 
@@ -480,7 +491,7 @@ export default {
       }
 
       if (this.arraysEqual(this.Grille._propositions, word) == true) {
-        if ((this.turnToPlay = true)) {
+        if ((this.turnToPlay == true)) {
           this.win();
         } else {
           this.opponentWinRound();
@@ -537,7 +548,7 @@ export default {
         tdDiv[i].innerHTML = "";
       }
       this.getRandomWord();
-      vm.socket.emit("newWord", this.uuid, this.wordToFindString);
+      vm.socket.emit("newWord", this.uuid, this.wordToFindString, this.winRound);
     },
 
     opponentWinRound() {
@@ -545,13 +556,30 @@ export default {
       this.changeText = "Votre adversaire a trouvé le mot";
     },
     win() {
+     
+      const vm = this;
       this.endGame = true;
+      this.winRound = true
       this.changeText = "Bien joué ! Vous avez trouvé le mot !";
+      this.addPointToPlayer(this.userNumber);
+      vm.socket.emit("winner", this.uuid, this.userNumber, this.winRound);
     },
+
+
+    addPointToPlayer(userNumber) {
+      console.log("L'utilisateur" + userNumber + " a gagné")
+      if ((userNumber == 1)) {
+        this.totalPointsPlayerOne = this.totalPointsPlayerOne + 50;
+      } else {
+        this.totalPointsPlayerTwo = this.totalPointsPlayerTwo + 50;
+      }
+    },
+
     loseAndRetry() {
       console.log("Mon ID : " + this.userNumber);
       this.looseRound = true;
       this.turnToPlay = false;
+      this.winRound = false
       var tdDiv = document.querySelectorAll("td");
       for (let i = 20; i < tdDiv.length; ++i) {
         tdDiv[i].removeAttribute("class");
@@ -584,9 +612,7 @@ export default {
 
     gameContinue() {
       const vm = this;
-      if (!this.loosePoint) {
-        this.totalPointsPlayerOne = this.totalPointsPlayerOne + 50;
-      }
+
       this.endGame = false;
 
       this.Grille._propositions = [];
@@ -600,8 +626,9 @@ export default {
       this.getRandomWord();
       this.turnToPlay = false;
 
-      vm.socket.emit("newWord", this.uuid, this.wordToFindString);
+      vm.socket.emit("newWord", this.uuid, this.wordToFindString, this.winRound);
     },
+
 
     wordToFindArray(wordToFind) {
       const usingSplit = wordToFind.split("");
@@ -609,8 +636,8 @@ export default {
       const usingArrayFrom = Array.from(wordToFind);
       const usingObjectAssign = Object.assign([], wordToFind);
       return usingObjectAssign;
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -779,64 +806,54 @@ body {
   font-weight: 800;
   font-size: 30px;
 }
-.motus-rules p{
+.motus-rules p {
+  font-family: "Raleway";
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 19px;
 
-font-family: 'Raleway';
-font-style: normal;
-font-weight: 400;
-font-size: 16px;
-line-height: 19px;
-
-color: #FFFFFF;
-margin:1rem 0;
-
-
+  color: #ffffff;
+  margin: 1rem 0;
 }
-.motus-rules h6{
-
-font-family: 'Raleway';
-font-style: normal;
-font-weight: 700;
-font-size: 16px;
-line-height: 19px;
-color: #FFFFFF;
-
-
+.motus-rules h6 {
+  font-family: "Raleway";
+  font-style: normal;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 19px;
+  color: #ffffff;
 }
-.motus-rules .input-div{
-  display:flex;
-  align-items:center;
-  margin-bottom:1rem;
+.motus-rules .input-div {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
 }
-.motus-pop{
-    position:absolute;
-    background-color: rgba(0, 0, 0, 0.5);
+.motus-pop {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.5);
   right: 0;
   bottom: 0;
   left: 0;
   top: 0;
   overflow: hidden;
   outline: 0;
-  z-index:1;
-
+  z-index: 1;
 }
-.input-number__custom{
-
+.input-number__custom {
 }
-.btn-fill{
-background: #3CB396;
-border-radius: 38px;
-width:100%;
-font-family: 'Raleway';
-font-style: normal;
-font-weight: 400;
-font-size: 20px;
-line-height: 23px;
-text-align: center;
-padding:0.5rem;
-color: #FFFFFF;
-border:none;
-
-
+.btn-fill {
+  background: #3cb396;
+  border-radius: 38px;
+  width: 100%;
+  font-family: "Raleway";
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 23px;
+  text-align: center;
+  padding: 0.5rem;
+  color: #ffffff;
+  border: none;
 }
 </style>
