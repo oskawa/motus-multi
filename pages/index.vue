@@ -8,7 +8,7 @@
           <NuxtLink class="link-btn" to="/solo">Mode solo</NuxtLink>
           <NuxtLink
             class="link-btn"
-            :to="{ path: 'test', query: { multiID } }"
+            :to="{ path: 'multi-player', query: { multiID } }"
             >Mode Multi-joueur</NuxtLink
           >
         </div>
@@ -26,8 +26,8 @@ export default {
     };
   },
   mounted() {
-    console.log(uuidv4());
-    console.log(this.multiID);
+  
+    
   },
 };
 </script>

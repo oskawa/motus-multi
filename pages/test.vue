@@ -1,5 +1,6 @@
 <template>
   <div class="container section-app">
+    <reaction></reaction>
     <div class="row row-timer">
       <div class="col-2">
         <div class="timer-container">
@@ -118,6 +119,8 @@
         </div>
       </div>
     </div>
+
+    
   </div>
 </template>
 
@@ -395,7 +398,7 @@ vm.socket.on('addPointToPlayer', (userId) =>{
     },
 
     getRandomWord() {
-      let letter = this.lettersNumber;
+      let letter = this.Grille._longueurMot;
 
       var generateWord = words.filter((word) => word.length == letter);
 
